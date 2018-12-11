@@ -5,6 +5,7 @@ import com.example.petr.flappybird.MainThread;
 
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 
@@ -64,7 +65,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super.draw(canvas);
         if(canvas!=null)
         {
+            canvas.drawRGB(0, 100, 205);
            birdSprite.draw(canvas);
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        birdSprite.y = birdSprite.y - (birdSprite.yVelocity * 10);
+        return super.onTouchEvent(event);
     }
 }
