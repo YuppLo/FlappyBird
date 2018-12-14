@@ -24,8 +24,11 @@ public class PipeSprite
 
     public void draw(Canvas canvas)
     {
-        canvas.drawBitmap(image, xX, -(GameView.gapHeight / 2) + yY, null);
-        canvas.drawBitmap(image2,xX, ((screenHeight / 2) + (GameView.gapHeight / 2)) + yY, null);
+        //canvas.drawBitmap(image, xX, -(GameView.gapHeight / 2) + yY, null);
+        //canvas.drawBitmap(image2,xX, ((screenHeight / 2) + (GameView.gapHeight / 2)) + yY, null);
+
+        canvas.drawBitmap(image, xX, yY-screenHeight, null);
+        canvas.drawBitmap(image2,xX, yY+GameView.gapHeight, null);
 
     }
     public void update()

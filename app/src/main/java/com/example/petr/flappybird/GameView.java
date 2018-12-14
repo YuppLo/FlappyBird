@@ -10,6 +10,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
@@ -24,12 +26,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private MainThread thread;
     private BirdSprite birdSprite;
     private Drawable backgroundImage;
-    //private Drawable pipe_down;
-    //private Drawable pipe_up;
     public PipeSprite pipe1,pipe2,pipe3;
+    private MediaPlayer mpTap;
+
+    public Bitmap bmp;
+    public Bitmap bmp2;
 
     public static int gapHeight = 350;
     public static int velocity = 25;
+    public static int pipesGap = 800;
+
+    public static int BirdWidth = 150;
+    public static int BirdHeight = 120;
+
+    public int biggestXpipe = 0;
+
+    ArrayList<PipeSprite> pipes = new ArrayList<>();
+
 
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
@@ -39,8 +52,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super(context);
 
         backgroundImage = context.getResources().getDrawable(R.drawable.background);
-        //pipe_down = context.getResources().getDrawable(R.drawable.pipe_down);
-        //ipe_up = context.getResources().getDrawable(R.drawable.pipe_up);
 
         getHolder().addCallback(this);
 
@@ -57,8 +68,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
-        //birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.birdhard), 150, 150));
+        bmp = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_down), 150, screenHeight);
+        bmp2 = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_up), 150, screenHeight);
 
+        mpTap = MediaPlayer.create(getContext(),R.raw.tap);
         makeLevel();
 
         thread.setRunning(true);
@@ -84,9 +97,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     {
         logic();
         birdSprite.update();
-        pipe1.update();
-        pipe2.update();
-        pipe3.update();
+
+        for (int i = 0; i < pipes.size(); i++)
+        {
+            pipes.get(i).update();
+        }
     }
 
     @Override
@@ -100,88 +115,114 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             backgroundImage.setBounds(imageBounds);
             backgroundImage.draw(canvas);
             birdSprite.draw(canvas);
-            pipe1.draw(canvas);
-            pipe2.draw(canvas);
-            pipe3.draw(canvas);
+
+            for (int i = 0; i < pipes.size(); i++)
+            {
+                pipes.get(i).draw(canvas);
+            }
+
         }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        tapSound();
         birdSprite.yVelocity += birdSprite.lift;
-        //birdSprite.y = birdSprite.y - (birdSprite.yVelocity * 10);
+
         return super.onTouchEvent(event);
     }
 
     private void makeLevel()
     {
-        birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_hard), 170, 120));
-        Bitmap bmp;
-        Bitmap bmp2;
+        birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_hard), BirdWidth, BirdHeight));
+
         int y;
         int x;
-        bmp = getResizedBitmap(BitmapFactory.decodeResource
-                (getResources(), R.drawable.pipe_down), 250, Resources.getSystem().getDisplayMetrics().heightPixels / 2);
-        bmp2 = getResizedBitmap
-                (BitmapFactory.decodeResource(getResources(), R.drawable.pipe_up), 250, Resources.getSystem().getDisplayMetrics().heightPixels / 2);
 
-        pipe1 = new PipeSprite(bmp, bmp2, 2000, 100);
-        pipe2 = new PipeSprite(bmp, bmp2, 5000, 100);
-        pipe3 = new PipeSprite(bmp, bmp2, 3500, 100);
 
+        pipe1 = new PipeSprite(bmp, bmp2, screenWidth, RandomizePipe());
+        pipes.add(pipe1);
+        pipe2 = new PipeSprite(bmp, bmp2, pipe1.xX+pipesGap+150, RandomizePipe());
+        pipes.add(pipe2);
+        pipe3 = new PipeSprite(bmp, bmp2, pipe2.xX+pipesGap+150, RandomizePipe());
+        pipes.add(pipe3);
+
+        Log.d("SIZE", screenWidth+","+screenHeight);
+
+    }
+
+    private void tapSound()
+    {
+        if (mpTap.isPlaying())
+        {
+            mpTap.seekTo(0);
+        }
+        else
+        {
+            mpTap.start();
+        }
     }
 
     public void logic()
     {
-        ArrayList<PipeSprite> pipes = new ArrayList<PipeSprite>();
-        pipes.add(pipe1);
-        pipes.add(pipe2);
-        pipes.add(pipe3);
+        Log.d("PIPES", "Pocet trubek:"+pipes.size());
 
         for (int i = 0; i < pipes.size(); i++)
         {
             //Detect if the bird is touching one of the pipes
-            if (birdSprite.y < pipes.get(i).yY + (screenHeight / 2)
-                    - (gapHeight / 2) && birdSprite.x + 170 > pipes.get(i).xX
-                    && birdSprite.x < pipes.get(i).xX + 250) {
-                resetLevel();
-            } else if (birdSprite.y + 120 > (screenHeight / 2) +
-                    (gapHeight / 2) + pipes.get(i).yY
-                    && birdSprite.x + 300 > pipes.get(i).xX
-                    && birdSprite.x < pipes.get(i).xX + 250) {
-                resetLevel();
+            if (birdSprite.y < pipes.get(i).yY || birdSprite.y+BirdHeight > pipes.get(i).yY+gapHeight)
+            {
+                if (birdSprite.x+BirdWidth > pipes.get(i).xX && birdSprite.x < pipes.get(i).xX + 150)
+                {
+                    resetLevel();
+                }
             }
 
-            //Detect if the pipe has gone off the left of the
-            //screen and regenerate further ahead
-            if (pipes.get(i).xX + 250 < 0) {
-                Random r = new Random();
-                int value1 = r.nextInt(500);
-                int value2 = r.nextInt(500);
-                pipes.get(i).xX = screenWidth + value1 + 1000;
-                pipes.get(i).yY = value2 - 250;
+
+            //Detect if the pipe has gone off the left of the screen and regenerate further ahead
+            if (pipes.get(i).xX + 150 < 0)
+            {
+                for (int j = 0; j < pipes.size(); j++)
+                {
+                    if (biggestXpipe < pipes.get(j).xX)
+                    {
+                        biggestXpipe = pipes.get(j).xX;
+                    }
+                }
+
+                 pipes.get(i).xX = biggestXpipe + pipesGap;
+                 pipes.get(i).yY = RandomizePipe();
+
+                biggestXpipe = 0;
             }
         }
 
         //Detect if the bird has gone off the
         //bottom or top of the screen
-        if (birdSprite.y + 240 < 0) {
-            resetLevel(); }
-        if (birdSprite.y > screenHeight) {
-            resetLevel(); }
+        if (birdSprite.y + 120 < 0)
+        { resetLevel(); }
+        if (birdSprite.y > screenHeight)
+        { resetLevel(); }
+    }
+
+    public int RandomizePipe()
+    {
+        Random r = new Random();
+        int upperHeight = r.nextInt((int)(screenHeight*0.75));
+        return upperHeight;
     }
 
     public void resetLevel()
     {
         birdSprite.y = 100;
-        pipe1.xX = 2000;
-        pipe1.yY = 0;
-        pipe2.xX = 4500;
-        pipe2.yY = 200;
-        pipe3.xX = 3200;
-        pipe3.yY = 250;
 
+        pipe1.xX = screenWidth;
+        pipe1.yY = RandomizePipe();
+        pipe2.xX = pipe1.xX+pipesGap+150;
+        pipe2.yY = RandomizePipe();
+        pipe3.xX = pipe2.xX+pipesGap+150;
+        pipe3.yY = RandomizePipe();
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight)
