@@ -34,9 +34,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static String chosenDiff;
 
-    public static int gapHeight = 350;
-    public static int velocity = 25;
-    public static int pipesGap = 800;
+    public static int gapHeight;
+    public static int velocity;
+    public static int pipesGap;
+
+    public static int score;
 
     public static int BirdWidth = 150;
     public static int BirdHeight = 120;
@@ -142,12 +144,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         {
             case "easy":
                 birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_easy), BirdWidth, BirdHeight));
+                gapHeight = 350;
+                velocity = 15;
+                pipesGap = 1000;
                 break;
             case "normal":
                 birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_normal), BirdWidth, BirdHeight));
+                gapHeight = 325;
+                velocity = 20;
+                pipesGap = 850;
                 break;
             case "hard":
                 birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_hard), BirdWidth, BirdHeight));
+                gapHeight = 300;
+                velocity = 25;
+                pipesGap = 700;
                 break;
             default:
         }

@@ -10,7 +10,6 @@ public class PipeSprite
     private Bitmap image;
     private Bitmap image2;
     public int xX, yY;
-    private int xVelocity = 10;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
     public PipeSprite (Bitmap bmp, Bitmap bmp2, int x, int y)
@@ -24,9 +23,6 @@ public class PipeSprite
 
     public void draw(Canvas canvas)
     {
-        //canvas.drawBitmap(image, xX, -(GameView.gapHeight / 2) + yY, null);
-        //canvas.drawBitmap(image2,xX, ((screenHeight / 2) + (GameView.gapHeight / 2)) + yY, null);
-
         canvas.drawBitmap(image, xX, yY-screenHeight, null);
         canvas.drawBitmap(image2,xX, yY+GameView.gapHeight, null);
 

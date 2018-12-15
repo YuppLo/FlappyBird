@@ -11,8 +11,8 @@ public class BirdSprite
 
     private int xVelocity = 10;
     public double yVelocity = 0;
-    public double gravity = 3;
-    public double lift = -20;
+    public double gravity = 5;
+    public double lift = -50;
 
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
@@ -32,7 +32,7 @@ public class BirdSprite
     public void update()
     {
         yVelocity +=gravity;
-        yVelocity *= 0.8;
+        yVelocity *= 0.85;
         y += yVelocity;
     }
 }
