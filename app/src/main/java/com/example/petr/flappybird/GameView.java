@@ -32,6 +32,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public Bitmap bmp;
     public Bitmap bmp2;
 
+    public static String chosenDiff;
+
     public static int gapHeight = 350;
     public static int velocity = 25;
     public static int pipesGap = 800;
@@ -133,9 +135,28 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         return super.onTouchEvent(event);
     }
 
+
+    public void setDifficulty()
+    {
+        switch(chosenDiff)
+        {
+            case "easy":
+                birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_easy), BirdWidth, BirdHeight));
+                break;
+            case "normal":
+                birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_normal), BirdWidth, BirdHeight));
+                break;
+            case "hard":
+                birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_hard), BirdWidth, BirdHeight));
+                break;
+            default:
+        }
+    }
+
+
     private void makeLevel()
     {
-        birdSprite = new BirdSprite(getResizedBitmap(BitmapFactory.decodeResource(getResources(),R.drawable.bird_hard), BirdWidth, BirdHeight));
+       setDifficulty();
 
         int y;
         int x;
@@ -167,6 +188,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public void logic()
     {
         Log.d("PIPES", "Pocet trubek:"+pipes.size());
+        Log.d("PIPES", "Obtiznost:"+chosenDiff);
 
         for (int i = 0; i < pipes.size(); i++)
         {
