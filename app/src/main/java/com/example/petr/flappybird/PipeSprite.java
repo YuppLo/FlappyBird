@@ -10,6 +10,7 @@ public class PipeSprite
     private Bitmap image;
     private Bitmap image2;
     public int xX, yY;
+    public boolean isPassed = false;
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
     public PipeSprite (Bitmap bmp, Bitmap bmp2, int x, int y)

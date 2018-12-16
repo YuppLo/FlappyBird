@@ -13,6 +13,7 @@ public class MainActivity extends Activity {
     {
         Bundle b = getIntent().getExtras();
         GameView.chosenDiff = b.getString("chosenDiff");
+
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);

@@ -7,10 +7,16 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
@@ -20,6 +26,8 @@ import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import static android.content.Context.VIBRATOR_SERVICE;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
@@ -40,13 +48,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static int score;
 
+
+
     public static int BirdWidth = 150;
     public static int BirdHeight = 120;
+    public static int PipesWidth = 150;
 
     public int biggestXpipe = 0;
 
     ArrayList<PipeSprite> pipes = new ArrayList<>();
 
+
+    Paint scorePaint;
 
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
@@ -58,6 +71,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         backgroundImage = context.getResources().getDrawable(R.drawable.background);
 
         getHolder().addCallback(this);
+
+        scorePaint = new Paint();
+        scorePaint.setColor(Color.WHITE);
+        scorePaint.setTextSize(80);
+        scorePaint.setTypeface(Typeface.DEFAULT_BOLD);
+        scorePaint.setShadowLayer(1,0,0,Color.BLACK);
+        scorePaint.setTextAlign(Paint.Align.CENTER);
+
+
+
 
         thread = new MainThread(getHolder(), this);
         setFocusable(true);
@@ -72,8 +95,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
-        bmp = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_down), 150, screenHeight);
-        bmp2 = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_up), 150, screenHeight);
+        bmp = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_down), PipesWidth, screenHeight);
+        bmp2 = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_up), PipesWidth, screenHeight);
 
         mpTap = MediaPlayer.create(getContext(),R.raw.tap);
         makeLevel();
@@ -120,10 +143,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             backgroundImage.draw(canvas);
             birdSprite.draw(canvas);
 
+
+
             for (int i = 0; i < pipes.size(); i++)
             {
                 pipes.get(i).draw(canvas);
             }
+
+            canvas.drawText(Integer.toString(score), screenWidth/2,100,scorePaint);
 
         }
     }
@@ -131,7 +158,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
-        tapSound();
+        if(MenuActivity.soundsEnabled)
+        { tapSound(); }
+
         birdSprite.yVelocity += birdSprite.lift;
 
         return super.onTouchEvent(event);
@@ -175,9 +204,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         pipe1 = new PipeSprite(bmp, bmp2, screenWidth, RandomizePipe());
         pipes.add(pipe1);
-        pipe2 = new PipeSprite(bmp, bmp2, pipe1.xX+pipesGap+150, RandomizePipe());
+        pipe2 = new PipeSprite(bmp, bmp2, pipe1.xX+pipesGap+PipesWidth, RandomizePipe());
         pipes.add(pipe2);
-        pipe3 = new PipeSprite(bmp, bmp2, pipe2.xX+pipesGap+150, RandomizePipe());
+        pipe3 = new PipeSprite(bmp, bmp2, pipe2.xX+pipesGap+PipesWidth, RandomizePipe());
         pipes.add(pipe3);
 
         Log.d("SIZE", screenWidth+","+screenHeight);
@@ -196,20 +225,60 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    private void vibrate()
+    {
+        if (Build.VERSION.SDK_INT >= 26)
+        {
+            ((Vibrator) this.getContext().getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+        else
+        {
+            ((Vibrator) this.getContext().getSystemService(VIBRATOR_SERVICE)).vibrate(150);
+        }
+    }
+
+    public void resume()
+    {
+        thread.setRunning(true);
+        thread.start();
+
+    }
+
+    public void pause()
+    {
+        if(thread!=null)
+        {
+            thread.interrupt();
+            thread = null;
+        }
+    }
+
     public void logic()
     {
-        Log.d("PIPES", "Pocet trubek:"+pipes.size());
-        Log.d("PIPES", "Obtiznost:"+chosenDiff);
+        //Log.d("PIPES", "Pocet trubek:"+pipes.size());
+        //Log.d("PIPES", "Obtiznost:"+chosenDiff);
+        Log.d("PIPES", "Score:"+score);
 
         for (int i = 0; i < pipes.size(); i++)
         {
             //Detect if the bird is touching one of the pipes
             if (birdSprite.y < pipes.get(i).yY || birdSprite.y+BirdHeight > pipes.get(i).yY+gapHeight)
             {
-                if (birdSprite.x+BirdWidth > pipes.get(i).xX && birdSprite.x < pipes.get(i).xX + 150)
+                if (birdSprite.x+BirdWidth > pipes.get(i).xX && birdSprite.x < pipes.get(i).xX + PipesWidth)
                 {
+                    vibrate();
                     resetLevel();
                 }
+            }
+
+            if (pipes.get(i).isPassed == false)
+            {
+                if(birdSprite.x > pipes.get(i).xX+PipesWidth)
+                {
+                    score++;
+                    pipes.get(i).isPassed = true;
+                }
+
             }
 
 
@@ -226,6 +295,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
                  pipes.get(i).xX = biggestXpipe + pipesGap;
                  pipes.get(i).yY = RandomizePipe();
+                 pipes.get(i).isPassed = false;
 
                 biggestXpipe = 0;
             }
@@ -248,6 +318,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void resetLevel()
     {
+        score = 0;
         birdSprite.y = 100;
 
         pipe1.xX = screenWidth;
