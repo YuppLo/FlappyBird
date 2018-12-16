@@ -17,8 +17,13 @@
         <item name="android:colorBackgroundCacheHint">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
         <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="android:windowDisablePreview">true</item>
 
        <item name="android:windowBackground">@drawable/bg_activity_dialog</item>
+    </style>
+
+    <style name="BasicTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
 </resources>

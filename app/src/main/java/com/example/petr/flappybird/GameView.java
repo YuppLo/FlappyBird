@@ -1,8 +1,12 @@
 package com.example.petr.flappybird;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import com.example.petr.flappybird.MainThread;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,12 +19,18 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
+import android.view.View;
+import android.view.ViewDebug;
+import android.widget.Toast;
 
 import java.nio.channels.Pipe;
 import java.util.ArrayList;
@@ -37,6 +47,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public PipeSprite pipe1,pipe2,pipe3;
     private MediaPlayer mpTap;
 
+    private boolean firstLaunch = true;
+
     public Bitmap bmp;
     public Bitmap bmp2;
 
@@ -46,8 +58,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public static int velocity;
     public static int pipesGap;
 
+    public static String status = "Swipe right to start";
+
     public static int score;
 
+    public static boolean gameStarted = false;
 
 
     public static int BirdWidth = 150;
@@ -55,6 +70,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public static int PipesWidth = 150;
 
     public int biggestXpipe = 0;
+
+
+    AlertDialog.Builder builder;
 
     ArrayList<PipeSprite> pipes = new ArrayList<>();
 
@@ -64,7 +82,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
-    public GameView(Context context)
+    public GameView(final Context context)
     {
         super(context);
 
@@ -81,9 +99,55 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
 
-
         thread = new MainThread(getHolder(), this);
         setFocusable(true);
+
+
+        getRootView().setOnTouchListener(new OnSwipeTouchListener(context)
+        {
+            public void onDowns()
+            {
+                doOnTap();
+                Log.d("GESTURES", "single tap");
+            }
+
+            public void onSwipeRight()
+            {
+                if (!gameStarted)
+                {
+                    Log.d("GESTURES", "swiplo to dopravaa");
+
+
+                    new CountDownTimer(4000, 100)
+                    {
+                        public void onTick(long millisUntilFinished)
+                        {
+                            Long temp = millisUntilFinished / 1000;
+                            if(temp != 0) { status = Long.toString(temp); }
+                            else { status = "DONE"; }
+                        }
+
+                        public void onFinish()
+                        {
+                            status = "DONE";
+                        }
+
+                    }.start();
+
+
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            gameStarted = true;
+
+                        }
+                    }, 3000);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -99,7 +163,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         bmp2 = getResizedBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pipe_up), PipesWidth, screenHeight);
 
         mpTap = MediaPlayer.create(getContext(),R.raw.tap);
+
+        builder = new AlertDialog.Builder(getContext());
+
         makeLevel();
+
+
+
 
         thread.setRunning(true);
         thread.start();
@@ -115,6 +185,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             {
                 thread.setRunning(false);
                 thread.join();
+                thread.interrupt();
+                thread = null;
+                score = 0;
+                gameStarted = false;
+                status = "Swipe right to start";
             } catch (InterruptedException e) { e.printStackTrace(); }
             retry = false;
         }
@@ -122,13 +197,32 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void update()
     {
-        logic();
-        birdSprite.update();
-
-        for (int i = 0; i < pipes.size(); i++)
+       /* new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
         {
-            pipes.get(i).update();
-        }
+            @Override
+            public void run()
+            {
+                logic();
+                birdSprite.update();
+
+                for (int i = 0; i < pipes.size(); i++)
+                {
+                    pipes.get(i).update();
+                }
+            }
+        }, 5000);*/
+
+       if(gameStarted)
+       {
+           logic();
+           birdSprite.update();
+
+           for (int i = 0; i < pipes.size(); i++)
+           {
+               pipes.get(i).update();
+           }
+       }
+
     }
 
     @Override
@@ -152,19 +246,48 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             canvas.drawText(Integer.toString(score), screenWidth/2,100,scorePaint);
 
+
+            if(!gameStarted)
+            {
+                canvas.drawText(status, screenWidth/2,screenHeight/2,scorePaint);
+            }
+
+
         }
     }
 
-    @Override
+
+    public void doOnTap()
+    {
+        if(gameStarted)
+        {
+            if(!thread.isAlive())
+            {
+                resume();
+            }
+
+            if(MenuActivity.soundsEnabled)
+            { tapSound(); }
+
+            birdSprite.yVelocity += birdSprite.lift;
+        }
+    }
+
+    /*@Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        if(!thread.isAlive())
+        {
+            resume();
+        }
+
         if(MenuActivity.soundsEnabled)
         { tapSound(); }
 
         birdSprite.yVelocity += birdSprite.lift;
 
         return super.onTouchEvent(event);
-    }
+    }*/
 
 
     public void setDifficulty()
@@ -267,7 +390,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 if (birdSprite.x+BirdWidth > pipes.get(i).xX && birdSprite.x < pipes.get(i).xX + PipesWidth)
                 {
                     vibrate();
-                    resetLevel();
+                    endGame();
+                    //resetLevel();
                 }
             }
 
@@ -277,6 +401,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 {
                     score++;
                     pipes.get(i).isPassed = true;
+                    //pause();
                 }
 
             }
@@ -316,8 +441,71 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         return upperHeight;
     }
 
+    public void endGame()
+    {
+        String statusss = "Your final score is "+score+"! Wanna play again?";
+
+
+
+       /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            builder = new AlertDialog.Builder(getContext(), android.R.style.Theme_Material_Dialog_Alert);
+        }
+        else
+        {
+            builder = new AlertDialog.Builder(getContext());
+        }*/
+
+
+        thread.setRunning(false);
+        thread.interrupt();
+        thread = null;
+
+        builder.setTitle("Game Over")
+                .setMessage(statusss)
+                .setPositiveButton("Play again", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int which) {
+                        resetLevel();
+                    }
+                })
+                .setNegativeButton("Exit", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        ((Activity)getContext()).finish();
+                       /* Intent intent = new Intent(getContext(), DifficultyActivity.class);
+                        getContext().startActivity(intent);*/
+                    }
+                });
+
+        builder.setCancelable(false);
+
+        new Handler(Looper.getMainLooper()).post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                builder.show();
+            }
+        });
+
+
+
+
+
+        /*endGameDialog.endStatus = "Zatim nic";
+        endGameDialog.finalScore = score;
+        Intent intent = new Intent(getContext(), endGameDialog.class);
+        getContext().startActivity(intent);*/
+    }
+
     public void resetLevel()
     {
+        thread = new MainThread(getHolder(), this);
+        thread.setRunning(true);
+        thread.start();
+
         score = 0;
         birdSprite.y = 100;
 
