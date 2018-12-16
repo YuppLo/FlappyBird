@@ -79,21 +79,6 @@ public class MenuActivity extends Activity
         }
 
 
-
-
-
-
-
-
-
-       //easyHighscores = readScoresFromFile(this);
-       /*if(easyHighscores == null)
-       {
-           easyHighscores.add(0);
-           easyHighscores.add(0);
-           easyHighscores.add(0);
-       }*/
-
         Log.d("SCORECKA","Hydrogen");
 
         for (Integer score : easyHighscores)
@@ -134,6 +119,12 @@ public class MenuActivity extends Activity
     public void openSettings(View v)
     {
         Intent intent = new Intent(this, settingsDialog.class);
+        startActivity(intent);
+    }
+
+    public void openAbout(View v)
+    {
+        Intent intent = new Intent(this, aboutDialog.class);
         startActivity(intent);
     }
 

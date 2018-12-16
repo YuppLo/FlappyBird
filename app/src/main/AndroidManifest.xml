@@ -20,6 +20,7 @@
         <activity android:name=".MainActivity" android:theme="@style/BasicTheme" android:screenOrientation="landscape"/>
         <activity android:name=".HighscoresActivity" android:theme="@style/BasicTheme" android:screenOrientation="landscape"/>
         <activity android:name=".settingsDialog" android:theme="@style/styleActivityDialog" android:launchMode="singleTop"/>
+        <activity android:name=".aboutDialog" android:theme="@style/styleActivityDialog" android:launchMode="singleTop"/>
     </application>
 
     <uses-permission android:name="android.permission.VIBRATE"/>

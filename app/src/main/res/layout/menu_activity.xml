@@ -70,7 +70,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="182dp" />
+        app:layout_constraintGuide_begin="189dp" />
 
     <Button
         android:id="@+id/buttonSettings"
@@ -82,6 +82,18 @@
         android:background="@drawable/settings_icon"
         android:onClick="openSettings"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonAbout"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/qmark"
+        android:onClick="openAbout"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
