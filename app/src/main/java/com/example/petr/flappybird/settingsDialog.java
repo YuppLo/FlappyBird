@@ -43,14 +43,14 @@ public class settingsDialog extends Activity
                     soundsCB.setChecked(true);
                     MenuActivity.soundsEnabled = true;
 
-                    Log.d("NASTAVENI", "sound checked");
+                    //Log.d("NASTAVENI", "sound checked");
                 }
                 else
                 {
                     soundsCB.setChecked(false);
                     MenuActivity.soundsEnabled = false;
 
-                    Log.d("NASTAVENI", "sound unchecked");
+                    //Log.d("NASTAVENI", "sound unchecked");
                 }
                 break;
             }
@@ -61,14 +61,14 @@ public class settingsDialog extends Activity
                     musicCB.setChecked(true);
                     MenuActivity.musicEnabled = true;
 
-                    Log.d("NASTAVENI", "music checked");
+                    //Log.d("NASTAVENI", "music checked");
                 }
                 else
                 {
                     musicCB.setChecked(false);
                     MenuActivity.musicEnabled = false;
 
-                    Log.d("NASTAVENI", "music unchecked");
+                    //Log.d("NASTAVENI", "music unchecked");
                 }
                 break;
             }

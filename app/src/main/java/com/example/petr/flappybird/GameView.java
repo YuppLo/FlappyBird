@@ -25,6 +25,7 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
@@ -34,6 +35,8 @@ import android.widget.Toast;
 
 import java.nio.channels.Pipe;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -57,6 +60,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public static int gapHeight;
     public static int velocity;
     public static int pipesGap;
+
+    public static ArrayList<Integer> ezHS;
+    public static ArrayList<Integer> noHS;
+    public static ArrayList<Integer> haHS;
+
+    public static boolean scoreChanged = false;
 
     public static String status = "Swipe right to start";
 
@@ -97,6 +106,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         scorePaint.setShadowLayer(1,0,0,Color.BLACK);
         scorePaint.setTextAlign(Paint.Align.CENTER);
 
+        ezHS = MenuActivity.easyHighscores;
+        noHS = MenuActivity.normalHighscores;
+        haHS = MenuActivity.hardHighscores;
+
 
 
         thread = new MainThread(getHolder(), this);
@@ -108,16 +121,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             public void onDowns()
             {
                 doOnTap();
-                Log.d("GESTURES", "single tap");
+                //Log.d("GESTURES", "single tap");
             }
 
             public void onSwipeRight()
             {
                 if (!gameStarted)
                 {
-                    Log.d("GESTURES", "swiplo to dopravaa");
-
-
+                    //Log.d("GESTURES", "swipe right");
                     new CountDownTimer(4000, 100)
                     {
                         public void onTick(long millisUntilFinished)
@@ -197,21 +208,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void update()
     {
-       /* new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                logic();
-                birdSprite.update();
-
-                for (int i = 0; i < pipes.size(); i++)
-                {
-                    pipes.get(i).update();
-                }
-            }
-        }, 5000);*/
-
        if(gameStarted)
        {
            logic();
@@ -222,7 +218,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                pipes.get(i).update();
            }
        }
-
     }
 
     @Override
@@ -231,7 +226,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super.draw(canvas);
         if(canvas!=null)
         {
-            Rect imageBounds = canvas.getClipBounds();  // Adjust this for where you want it
+            Rect imageBounds = canvas.getClipBounds();
 
             backgroundImage.setBounds(imageBounds);
             backgroundImage.draw(canvas);
@@ -272,22 +267,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             birdSprite.yVelocity += birdSprite.lift;
         }
     }
-
-    /*@Override
-    public boolean onTouchEvent(MotionEvent event)
-    {
-        if(!thread.isAlive())
-        {
-            resume();
-        }
-
-        if(MenuActivity.soundsEnabled)
-        { tapSound(); }
-
-        birdSprite.yVelocity += birdSprite.lift;
-
-        return super.onTouchEvent(event);
-    }*/
 
 
     public void setDifficulty()
@@ -332,7 +311,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         pipe3 = new PipeSprite(bmp, bmp2, pipe2.xX+pipesGap+PipesWidth, RandomizePipe());
         pipes.add(pipe3);
 
-        Log.d("SIZE", screenWidth+","+screenHeight);
+        //Log.d("SIZE", screenWidth+","+screenHeight);
 
     }
 
@@ -391,7 +370,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 {
                     vibrate();
                     endGame();
-                    //resetLevel();
                 }
             }
 
@@ -401,7 +379,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 {
                     score++;
                     pipes.get(i).isPassed = true;
-                    //pause();
                 }
 
             }
@@ -429,9 +406,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         //Detect if the bird has gone off the
         //bottom or top of the screen
         if (birdSprite.y + 120 < 0)
-        { resetLevel(); }
+        { vibrate(); endGame(); }
         if (birdSprite.y > screenHeight)
-        { resetLevel(); }
+        { vibrate(); endGame(); }
     }
 
     public int RandomizePipe()
@@ -441,13 +418,44 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         return upperHeight;
     }
 
+    private static Integer findMinNumberFromArrayList(ArrayList<Integer> list)
+    {
+        Integer min = Integer.MAX_VALUE;
+        for (Integer number : list)
+        {
+            if(number < min)
+            {
+                min = number;
+            }
+        }
+        return min;
+    }
+
+    public boolean addScore(ArrayList<Integer> list)
+    {
+        boolean isNewHS = false;
+
+        list.add(score);
+
+        Integer tempMin = findMinNumberFromArrayList(list);
+
+        if(tempMin != score)
+        {
+            isNewHS = true;
+        }
+
+        list.remove(Integer.valueOf(tempMin));
+
+        return isNewHS;
+    }
+
     public void endGame()
     {
-        String statusss = "Your final score is "+score+"! Wanna play again?";
+        String endGameStatus = "Not bad!";  //default value
+        String newHS = "That's a new high score!";
+        String notNewHS = "You could have done better.";
 
-
-
-       /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
             builder = new AlertDialog.Builder(getContext(), android.R.style.Theme_Material_Dialog_Alert);
         }
@@ -458,11 +466,40 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
         thread.setRunning(false);
-        thread.interrupt();
-        thread = null;
+
+
+        //Log.d("SCORECKA", chosenDiff);
+
+        if(chosenDiff.equals("easy"))
+        {
+            if(addScore(ezHS))
+            {
+                endGameStatus = "Your final score is "+score+"! "+ newHS;
+            }
+            else { endGameStatus = "Your final score is "+score+"! "+ notNewHS; }
+        }
+        else if(chosenDiff.equals("normal"))
+        {
+            if(addScore(noHS))
+            {
+                endGameStatus = "Your final score is "+score+"! "+ newHS;
+            }
+            else { endGameStatus = "Your final score is "+score+"! "+ notNewHS; }
+        }
+        else if(chosenDiff.equals("hard"))
+        {
+            if(addScore(haHS))
+            {
+                endGameStatus = "Your final score is "+score+"! "+ newHS;
+            }
+            else { endGameStatus = "Your final score is "+score+"! "+ notNewHS; }
+        }
+
+        scoreChanged = true;
+
 
         builder.setTitle("Game Over")
-                .setMessage(statusss)
+                .setMessage(endGameStatus)
                 .setPositiveButton("Play again", new DialogInterface.OnClickListener()
                 {
                     public void onClick(DialogInterface dialog, int which) {
@@ -473,32 +510,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 {
                     public void onClick(DialogInterface dialog, int which)
                     {
-                        ((Activity)getContext()).finish();
-                       /* Intent intent = new Intent(getContext(), DifficultyActivity.class);
-                        getContext().startActivity(intent);*/
+                        ((Activity) getContext()).finish();
                     }
                 });
 
         builder.setCancelable(false);
 
-        new Handler(Looper.getMainLooper()).post(new Runnable()
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
         {
             @Override
             public void run()
             {
                 builder.show();
             }
-        });
-
-
-
-
-
-        /*endGameDialog.endStatus = "Zatim nic";
-        endGameDialog.finalScore = score;
-        Intent intent = new Intent(getContext(), endGameDialog.class);
-        getContext().startActivity(intent);*/
+        }, 500);
     }
+
 
     public void resetLevel()
     {
@@ -515,6 +543,34 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         pipe2.yY = RandomizePipe();
         pipe3.xX = pipe2.xX+pipesGap+150;
         pipe3.yY = RandomizePipe();
+
+        gameStarted = false;
+        new CountDownTimer(4000, 100)
+        {
+            public void onTick(long millisUntilFinished)
+            {
+                Long temp = millisUntilFinished / 1000;
+                if(temp != 0) { status = Long.toString(temp); }
+                else { status = "DONE"; }
+            }
+
+            public void onFinish()
+            {
+                status = "DONE";
+            }
+
+        }.start();
+
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                gameStarted = true;
+
+            }
+        }, 3000);
     }
 
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight)
